@@ -1,0 +1,16 @@
+{
+  "name": "wack",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "ci:publish": "pnpm publish -r",
+    "new:release": "pnpm changeset"
+  },
+  "dependencies": {
+    "@manypkg/cli": "^0.21.4",
+    "@tsconfig/node20": "^20.1.4"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.27.5"
+  }
+}
