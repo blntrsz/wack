@@ -29,3 +29,13 @@ export class WackStack extends cdk.Stack {
     });
   }
 }
+
+export class WackStage extends cdk.Stage {
+  constructor(scope: Construct, id: string) {
+    super(scope, id);
+
+    new WackStack(this, "WackStack", {
+      branch: "",
+    });
+  }
+}
