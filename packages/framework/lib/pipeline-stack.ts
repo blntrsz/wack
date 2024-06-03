@@ -30,7 +30,7 @@ export class PipelineStack extends cdk.Stack {
 
     const bucket = Bucket.fromBucketName(this, "bucket", "asgard-main-prod");
 
-    const pipelineRole = new Role(this, "PipelineRole", {
+    const pipelineRole = new Role(this, "pipeline-role", {
       assumedBy: new ServicePrincipal("codepipeline.amazonaws.com"),
     });
 
@@ -42,7 +42,7 @@ export class PipelineStack extends cdk.Stack {
       })
     );
 
-    const pipeline = new CodePipeline(this, "Pipeline", {
+    const pipeline = new CodePipeline(this, "pipeline", {
       selfMutation: false,
       useChangeSets: false,
       role: pipelineRole,

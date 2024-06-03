@@ -37,7 +37,7 @@ export class AsgardStage extends cdk.Stage {
   constructor(scope: Construct, id: string) {
     super(scope, id);
 
-    new AsgardStack(this, "AsgardStack", {
+    new AsgardStack(this, "asgard", {
       branch: "",
     });
   }

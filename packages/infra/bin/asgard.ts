@@ -12,7 +12,7 @@ const branch = (await $`git branch --show-current`.then((s) =>
 
 new PipelineStack(
   app,
-  "PipelineStack",
+  "pipeline",
   { branch },
-  (stack) => new AsgardStage(stack, "AsgardStage")
+  (stack) => new AsgardStage(stack, "asgard")
 );
