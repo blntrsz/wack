@@ -1,5 +1,5 @@
 deploy:
-	@pnpm run --filter=@asgard/infra cdk deploy
+	@pnpm run --filter=@asgard/infra cdk deploy pipeline
 
 manypkg_check:
 	@pnpm manypkg check

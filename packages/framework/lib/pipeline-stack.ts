@@ -46,7 +46,7 @@ export class PipelineStack extends cdk.Stack {
       selfMutation: false,
       useChangeSets: false,
       role: pipelineRole,
-      synth: new ShellStep("Synth", {
+      synth: new ShellStep("synth", {
         input: CodePipelineSource.s3(bucket, "main.zip", {
           trigger: S3Trigger.EVENTS,
         }),
