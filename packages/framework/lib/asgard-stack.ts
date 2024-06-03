@@ -8,7 +8,7 @@ interface Props extends cdk.StackProps {
   branch: string;
 }
 
-export class WackStack extends cdk.Stack {
+export class AsgardStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: Props) {
     super(scope, id, props);
 
@@ -30,11 +30,11 @@ export class WackStack extends cdk.Stack {
   }
 }
 
-export class WackStage extends cdk.Stage {
+export class AsgardStage extends cdk.Stage {
   constructor(scope: Construct, id: string) {
     super(scope, id);
 
-    new WackStack(this, "WackStack", {
+    new AsgardStack(this, "AsgardStack", {
       branch: "",
     });
   }

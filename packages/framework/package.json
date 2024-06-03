@@ -1,5 +1,5 @@
 {
-  "name": "@asgard/infra",
+  "name": "@asgard/framework",
   "type": "module",
   "version": "0.0.0",
   "bin": {

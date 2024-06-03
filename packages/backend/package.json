@@ -1,5 +1,5 @@
 {
-  "name": "@wack/backend",
+  "name": "@asgard/backend",
   "version": "0.0.0",
   "type": "module",
   "scripts": {

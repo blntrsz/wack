@@ -1,5 +1,5 @@
 {
-  "app": "tsx bin/wack.ts",
+  "app": "tsx bin/asgard.ts",
   "watch": {
     "include": [
       "**"
