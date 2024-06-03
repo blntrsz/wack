@@ -1,5 +1,5 @@
 deploy:
-	@pnpm run --filter=@asgard/infra cdk deploy pipeline
+	@pnpm run --filter=@asgard/infra cdk deploy pipeline --require-approval never
 
 manypkg_check:
 	@pnpm manypkg check
