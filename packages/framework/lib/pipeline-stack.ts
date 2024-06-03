@@ -13,14 +13,19 @@ import {
   Role,
   ServicePrincipal,
 } from "aws-cdk-lib/aws-iam";
-import { AsgardStage } from "./asgard-stack.js";
+import { withApp } from "./app-contex.js";
 
 interface Props extends cdk.StackProps {
   branch: string;
 }
 
 export class PipelineStack extends cdk.Stack {
-  constructor(scope: Construct, id: string, props: Props) {
+  constructor(
+    scope: Construct,
+    id: string,
+    props: Props,
+    getStage: (stack: cdk.Stack) => cdk.Stage
+  ) {
     super(scope, id, props);
 
     const bucket = Bucket.fromBucketName(this, "bucket", "asgard-main-prod");
@@ -50,6 +55,8 @@ export class PipelineStack extends cdk.Stack {
       }),
     });
 
-    pipeline.addStage(new AsgardStage(this, "AsgardStack"));
+    withApp({ env: "myEnv" }, () => {
+      pipeline.addStage(getStage(this));
+    });
   }
 }
