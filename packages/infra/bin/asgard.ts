@@ -1,18 +1,11 @@
 #!/usr/bin/env node
 import "source-map-support/register";
 import * as cdk from "aws-cdk-lib";
-import { $ } from "zx";
 import { PipelineStack } from "@asgard/framework/lib/pipeline-stack.js";
 import { AsgardStage } from "../lib/asgard-stack.js";
+import { BootstrapStack } from "@asgard/framework/lib/bootstrap-stack.js";
 
 const app = new cdk.App();
-const branch = (await $`git branch --show-current`.then((s) =>
-  s.stdout.trim().substring(0, 8)
-)) as string;
 
-new PipelineStack(
-  app,
-  "pipeline",
-  { branch },
-  (stack) => new AsgardStage(stack, "asgard")
-);
+new PipelineStack(app, "pipeline", (stack) => new AsgardStage(stack, "asgard"));
+new BootstrapStack(app, "bootstrap");

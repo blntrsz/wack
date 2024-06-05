@@ -14,6 +14,11 @@ import {
   ServicePrincipal,
 } from "aws-cdk-lib/aws-iam";
 import { withApp } from "./app-contex.js";
+import { $ } from "zx";
+
+const branch = (await $`git branch --show-current`.then((s) =>
+  s.stdout.trim().substring(0, 8)
+)) as string;
 
 interface Props extends cdk.StackProps {
   branch: string;
@@ -23,8 +28,8 @@ export class PipelineStack extends cdk.Stack {
   constructor(
     scope: Construct,
     id: string,
-    props: Props,
-    getStage: (stack: cdk.Stack) => cdk.Stage
+    getStage: (stack: cdk.Stack) => cdk.Stage,
+    props?: Props
   ) {
     super(scope, id, props);
 
@@ -55,7 +60,7 @@ export class PipelineStack extends cdk.Stack {
       }),
     });
 
-    withApp({ env: "myEnv" }, () => {
+    withApp({ env: "myEnv", branch }, () => {
       pipeline.addStage(getStage(this));
     });
   }

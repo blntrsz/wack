@@ -40,15 +40,9 @@ jobs:
 
       - name: upload to S3
         run: |
-          aws s3 cp ${{ github.head_ref || github.ref_name }}.zip s3://asgard-main-prod
+          aws s3 cp ${{ github.head_ref || github.ref_name }}.zip s3://$BUCKET
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: 'eu-central-1'
-
-      - name: deploy pipeline
-        run: make deploy
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: 'eu-central-1'
+          BUCKET: asgard-main-bucket
