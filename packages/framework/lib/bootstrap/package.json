@@ -1,0 +1,9 @@
+{
+  "name": "bootstrap",
+  "type": "module",
+  "dependencies": {
+    "aws-cdk": "2.144.0",
+    "zx": "^8.1.2"
+  }
+}
+

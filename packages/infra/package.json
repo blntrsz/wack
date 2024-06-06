@@ -12,10 +12,10 @@
     "cdk": "cdk"
   },
   "devDependencies": {
-    "@types/jest": "^29.5.12",
-    "@types/node": "20.12.7",
     "@asgard/backend": "workspace:*",
     "@asgard/framework": "workspace:*",
+    "@types/jest": "^29.5.12",
+    "@types/node": "20.12.7",
     "aws-cdk": "2.144.0",
     "jest": "^29.7.0",
     "ts-jest": "^29.1.2",
@@ -24,6 +24,7 @@
     "typescript": "~5.4.5"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.591.0",
     "aws-cdk-lib": "2.144.0",
     "cdk-assets": "^2.144.0",
     "cdk-bootstrapless-synthesizer": "^2.3.2",
