@@ -21,9 +21,7 @@ export class Remix extends Construct {
     super(scope, id);
 
     const mySiteBucket = new s3.Bucket(this, "ssr-site", {
-      websiteIndexDocument: "index.html",
-      websiteErrorDocument: "error.html",
-      publicReadAccess: false,
+      publicReadAccess: true,
       //only for demo not to use in production
       removalPolicy: RemovalPolicy.DESTROY,
     });
@@ -58,27 +56,12 @@ export class Remix extends Construct {
       {
         originConfigs: [
           {
-            s3OriginSource: {
-              s3BucketSource: mySiteBucket,
-              originAccessIdentity: originAccessIdentity,
-            },
-            behaviors: [
-              {
-                isDefaultBehavior: true,
-              },
-            ],
-          },
-          {
             customOriginSource: {
               domainName: apiDomainName,
               originPath: "/prod",
               originProtocolPolicy: cloudfront.OriginProtocolPolicy.HTTPS_ONLY,
             },
-            behaviors: [
-              {
-                pathPattern: "/",
-              },
-            ],
+            behaviors: [],
           },
         ],
       }
