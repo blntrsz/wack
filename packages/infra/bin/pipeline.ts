@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 import 'source-map-support/register';
-import { BaseStack } from '../lib/base-stack';
 import { CDKApplication } from 'opinionated-ci-pipeline';
+import { ApiStack } from '../lib/api-stack';
 
 new CDKApplication({
   stacks: {
     create: (scope, projectName, envName) => {
-      new BaseStack(scope, 'BaseStack', { stackName: `${projectName}-${envName}-BaseStack` });
+      new ApiStack(scope, 'api', { stackName: `${projectName}-${envName}-api` });
     },
   },
   repository: {
@@ -15,9 +15,9 @@ new CDKApplication({
   },
   packageManager: 'pnpm',
   commands: {
-    preInstall: ["cd examples/base"],
+    preInstall: ["cd packages/infra"],
   },
-  cdkOutputDirectory: "examples/base/cdk.out",
+  cdkOutputDirectory: "packages/infra/cdk.out",
   pipeline: [
     {
       environment: 'test',

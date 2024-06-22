@@ -1,5 +1,5 @@
 {
-  "app": "npx tsx bin/base.ts",
+  "app": "npx tsx bin/pipeline.ts",
   "watch": {
     "include": [
       "**"
@@ -17,7 +17,7 @@
     ]
   },
   "context": {
-    "projectName": "base",
+    "projectName": "asgard",
     "environments": {
       "default": {
         "account": "155601209279",
