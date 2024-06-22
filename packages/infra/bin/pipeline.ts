@@ -19,7 +19,7 @@ new CDKApplication({
   },
   packageManager: "pnpm",
   commands: {
-    preInstall: ["cd packages/infra"],
+    buildAndTest: ["cd packages/ui && pnpm build && cd ../infra"],
   },
   cdkOutputDirectory: "packages/infra/cdk.out",
   pipeline: [
