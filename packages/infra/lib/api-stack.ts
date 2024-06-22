@@ -1,25 +1,24 @@
-import * as cdk from 'aws-cdk-lib'
-import { Construct } from 'constructs'
-import * as lambda from 'aws-cdk-lib/aws-lambda'
-import * as apigw from 'aws-cdk-lib/aws-apigateway'
-import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs'
-import { join } from 'path'
+import { Stack, StackProps } from "aws-cdk-lib"
+import { LambdaRestApi } from "aws-cdk-lib/aws-apigateway"
+import { FunctionUrlAuthType, Runtime } from "aws-cdk-lib/aws-lambda"
+import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs"
+import { Construct } from "constructs"
 
-export class ApiStack extends cdk.Stack {
-  constructor(scope: Construct, id: string, props?: cdk.StackProps) {
+export class ApiStack extends Stack {
+  constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props)
 
     const fn = new NodejsFunction(this, 'lambda', {
-      entry: join(import.meta.dirname, '../../backend/src/index.ts'),
+      entry: '../backend/src/index.ts',
       handler: 'handler',
-      runtime: lambda.Runtime.NODEJS_20_X,
+      runtime: Runtime.NODEJS_20_X,
     })
 
     fn.addFunctionUrl({
-      authType: lambda.FunctionUrlAuthType.NONE,
+      authType: FunctionUrlAuthType.NONE,
     })
 
-    new apigw.LambdaRestApi(this, 'myapi', {
+    new LambdaRestApi(this, 'myapi', {
       handler: fn,
     })
   }
