@@ -6,10 +6,6 @@ export class UiStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props);
 
-    new Remix(this, "remix", {
-      serverPath: "../ui/server/index.mjs",
-      buildPath: "../ui/build",
-      region: this.region,
-    });
+    new Remix(this, "remix");
   }
 }

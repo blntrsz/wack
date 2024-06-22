@@ -1,74 +1,150 @@
-// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
-// SPDX-License-Identifier: MIT-0
-
-import { Duration, CfnOutput, RemovalPolicy } from "aws-cdk-lib";
-import * as s3 from "aws-cdk-lib/aws-s3";
-import * as s3deploy from "aws-cdk-lib/aws-s3-deployment";
-import * as cloudfront from "aws-cdk-lib/aws-cloudfront";
-import * as apigw from "aws-cdk-lib/aws-apigateway";
+import { Bucket } from "aws-cdk-lib/aws-s3";
+import {
+  BucketDeployment,
+  CacheControl,
+  Source,
+} from "aws-cdk-lib/aws-s3-deployment";
 import { Construct } from "constructs";
-import { join } from "path";
-import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
-
-interface SsrStackProps {
-  serverPath: string;
-  buildPath: string;
-  region: string;
-}
+import { Duration, RemovalPolicy } from "aws-cdk-lib";
+import {
+  LogLevel,
+  NodejsFunction,
+  OutputFormat,
+} from "aws-cdk-lib/aws-lambda-nodejs";
+import { RetentionDays } from "aws-cdk-lib/aws-logs";
+import { HttpOrigin, S3Origin } from "aws-cdk-lib/aws-cloudfront-origins";
+import {
+  AllowedMethods,
+  CachePolicy,
+  Distribution,
+  HttpVersion,
+  LambdaEdgeEventType,
+  OriginAccessIdentity,
+  OriginRequestCookieBehavior,
+  OriginRequestHeaderBehavior,
+  OriginRequestPolicy,
+  OriginRequestQueryStringBehavior,
+  PriceClass,
+  ViewerProtocolPolicy,
+} from "aws-cdk-lib/aws-cloudfront";
+import {
+  FunctionUrlAuthType,
+  InvokeMode,
+  Runtime,
+} from "aws-cdk-lib/aws-lambda";
 
 export class Remix extends Construct {
-  constructor(scope: Construct, id: string, props: SsrStackProps) {
+  constructor(scope: Construct, id: string) {
     super(scope, id);
 
-    const mySiteBucket = new s3.Bucket(this, "ssr-site", {
-      publicReadAccess: true,
-      //only for demo not to use in production
+    const assetsBucket = new Bucket(this, "AssetsBucket", {
+      autoDeleteObjects: true,
+      publicReadAccess: false,
       removalPolicy: RemovalPolicy.DESTROY,
     });
 
-    const originAccessIdentity = new cloudfront.OriginAccessIdentity(
+    const assetsBucketOriginAccessIdentity = new OriginAccessIdentity(
       this,
-      "ssr-oia"
+      "AssetsBucketOriginAccessIdentity"
     );
-    mySiteBucket.grantRead(originAccessIdentity);
 
-    new s3deploy.BucketDeployment(this, "Client-side React app", {
-      sources: [s3deploy.Source.asset(join(props.buildPath, "client"))],
-      destinationBucket: mySiteBucket,
+    const assetsBucketS3Origin = new S3Origin(assetsBucket, {
+      originAccessIdentity: assetsBucketOriginAccessIdentity,
     });
 
-    const ssrFunction = new NodejsFunction(this, "ssr-handler", {
-      entry: props.serverPath,
-      timeout: Duration.seconds(15),
+    assetsBucket.grantRead(assetsBucketOriginAccessIdentity);
+
+    const fn = new NodejsFunction(this, "RemixServerFn", {
+      currentVersionOptions: {
+        removalPolicy: RemovalPolicy.DESTROY,
+      },
+      entry: "../ui/server/index.mjs",
+      logRetention: RetentionDays.THREE_DAYS,
+      memorySize: 256,
+      timeout: Duration.seconds(10),
+      runtime: Runtime.NODEJS_18_X,
+
+      bundling: {
+        esbuildArgs: {
+          "--tree-shaking": true,
+        },
+        format: OutputFormat.CJS,
+        logLevel: LogLevel.INFO,
+        minify: true,
+        commandHooks: {
+          afterBundling(inputDir, outputDir) {
+            return [
+              //moving dependencies from the input to the output
+              `cp ${inputDir}/build/server/*.map ${outputDir} || echo`,
+              `cp ${inputDir}/build/server/*.json ${outputDir} || echo`,
+            ];
+          },
+          beforeBundling: (): string[] => [],
+          beforeInstall: (): string[] => [],
+        },
+      },
     });
 
-    const ssrApi = new apigw.LambdaRestApi(this, "ssrEndpoint", {
-      handler: ssrFunction,
+    // The only way to interact with http streams is lambda function urls, which you cannot put behind a CDN, and route 53,
+    // so i'm not going to bother right now.
+    const url = fn.addFunctionUrl({
+      invokeMode: InvokeMode.RESPONSE_STREAM,
+      authType: FunctionUrlAuthType.NONE,
     });
 
-    new CfnOutput(this, "SSR API URL", { value: ssrApi.url });
-
-    const apiDomainName = `${ssrApi.restApiId}.execute-api.${props.region}.amazonaws.com`;
-
-    const distribution = new cloudfront.CloudFrontWebDistribution(
-      this,
-      "ssr-cdn",
-      {
-        originConfigs: [
+    const distribution = new Distribution(this, id + "Distribution", {
+      enableLogging: false,
+      httpVersion: HttpVersion.HTTP2_AND_3,
+      priceClass: PriceClass.PRICE_CLASS_100,
+      // Default behavior, all requests get handled by edge function, with the fall through origin as s3.
+      defaultBehavior: {
+        allowedMethods: AllowedMethods.ALLOW_ALL,
+        cachePolicy: CachePolicy.CACHING_DISABLED,
+        compress: true,
+        edgeLambdas: [
           {
-            customOriginSource: {
-              domainName: apiDomainName,
-              originPath: "/prod",
-              originProtocolPolicy: cloudfront.OriginProtocolPolicy.HTTPS_ONLY,
-            },
-            behaviors: [],
+            eventType: LambdaEdgeEventType.ORIGIN_REQUEST,
+            functionVersion: fn.currentVersion,
+            includeBody: true,
           },
         ],
-      }
-    );
 
-    new CfnOutput(this, "CF URL", {
-      value: `https://${distribution.distributionDomainName}`,
+        origin: new HttpOrigin(url.url.replace("https://", ""), {
+          originId: "StreamingFnOriginId",
+        }),
+        originRequestPolicy: new OriginRequestPolicy(
+          this,
+          "OriginRequestPolicy",
+          {
+            headerBehavior: OriginRequestHeaderBehavior.all(),
+            queryStringBehavior: OriginRequestQueryStringBehavior.all(),
+            cookieBehavior: OriginRequestCookieBehavior.all(),
+          }
+        ),
+        viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+      },
+      // Static assets are retrieved from the /assets path.
+      additionalBehaviors: {
+        "assets/*": {
+          allowedMethods: AllowedMethods.ALLOW_GET_HEAD,
+          cachePolicy: CachePolicy.CACHING_OPTIMIZED,
+          compress: true,
+          origin: assetsBucketS3Origin,
+          viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+        },
+      },
+    });
+
+    // Deploy the local code to S3
+    new BucketDeployment(this, id + "AssetsDeployment", {
+      destinationBucket: assetsBucket,
+      distribution,
+      prune: true,
+      sources: [Source.asset("../ui/build/client")],
+      cacheControl: [
+        CacheControl.maxAge(Duration.days(365)),
+        CacheControl.sMaxAge(Duration.days(365)),
+      ],
     });
   }
 }
