@@ -12,6 +12,7 @@
     "cdk": "cdk"
   },
   "devDependencies": {
+    "@tsconfig/node20": "^20.1.4",
     "@types/jest": "^29.5.12",
     "@types/node": "20.14.2",
     "aws-cdk": "2.147.0",

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import 'source-map-support/register';
 import { CDKApplication } from 'opinionated-ci-pipeline';
-import { ApiStack } from '../lib/api-stack';
+import { ApiStack } from '../lib/api-stack.js';
 
 new CDKApplication({
   stacks: {
