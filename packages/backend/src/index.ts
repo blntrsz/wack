@@ -1,14 +1,11 @@
+// index.ts
 import { Hono } from "hono";
-import { handle } from "hono/aws-lambda";
+import authors from "./api/authors";
+import books from "./api/books";
 
 const app = new Hono();
 
-const router = app.get("/", (c) => {
-  return c.json({
-    message: "Hello Hono + Remix!",
-  });
-});
+const routes = app.route("/authors", authors).route("/books", books);
 
-export const handler = handle(app);
-
-export type AppType = typeof router;
+export default app;
+export type AppType = typeof routes;

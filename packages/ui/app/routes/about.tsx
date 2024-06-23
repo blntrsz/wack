@@ -15,7 +15,7 @@ export const meta: MetaFunction = () => {
 };
 
 export async function loader() {
-  const response = await client.index.$get();
+  const response = await client.books.$get();
   const responseJson = await response.json();
 
   return json(responseJson);
@@ -28,7 +28,7 @@ export default function Index() {
     <div className="font-sans p-4">
       <h1 className="text-3xl">Welcome to Remix</h1>
       <Link to="/about">About</Link>
-      <h2>Message from server: {loaderData.message}</h2>
+      <h2>Message from server: {loaderData}</h2>
       <ul className="list-disc mt-4 pl-6 space-y-2">
         <li>
           <a

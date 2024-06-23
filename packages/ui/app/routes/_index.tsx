@@ -16,7 +16,7 @@ export const meta: MetaFunction = () => {
 };
 
 export async function loader() {
-  const response = client.index.$get().then((r) => r.json());
+  const response = client.books.$get().then((r) => r.json());
 
   return defer({ response });
 }
@@ -31,9 +31,7 @@ export default function Index() {
       <h2>
         Message from server:
         <Suspense fallback={<>Loading...</>}>
-          <Await resolve={loaderData.response}>
-            {(data) => <>{data.message}</>}
-          </Await>
+          <Await resolve={loaderData.response}>{(data) => <>{data}</>}</Await>
         </Suspense>
       </h2>
       <ul className="list-disc mt-4 pl-6 space-y-2">
