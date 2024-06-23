@@ -7,10 +7,17 @@ import { UiStack } from "../lib/ui-stack.js";
 new CDKApplication({
   stacks: {
     create: (scope, projectName, envName) => {
-      new ApiStack(scope, "api", {
+      const apiStack = new ApiStack(scope, "api", {
         stackName: `${projectName}-${envName}-api`,
       });
-      new UiStack(scope, "ui", { stackName: `${projectName}-${envName}-ui` });
+      new UiStack(
+        scope,
+        "ui",
+        {
+          stackName: `${projectName}-${envName}-ui`,
+        },
+        { apiStack }
+      );
     },
   },
   repository: {

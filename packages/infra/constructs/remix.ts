@@ -12,18 +12,17 @@ import {
   OutputFormat,
 } from "aws-cdk-lib/aws-lambda-nodejs";
 import { RetentionDays } from "aws-cdk-lib/aws-logs";
-import { HttpOrigin, S3Origin } from "aws-cdk-lib/aws-cloudfront-origins";
+import {
+  S3Origin,
+  FunctionUrlOrigin,
+} from "aws-cdk-lib/aws-cloudfront-origins";
 import {
   AllowedMethods,
   CachePolicy,
   Distribution,
   HttpVersion,
-  LambdaEdgeEventType,
   OriginAccessIdentity,
-  OriginRequestCookieBehavior,
-  OriginRequestHeaderBehavior,
   OriginRequestPolicy,
-  OriginRequestQueryStringBehavior,
   PriceClass,
   ViewerProtocolPolicy,
 } from "aws-cdk-lib/aws-cloudfront";
@@ -34,7 +33,7 @@ import {
 } from "aws-cdk-lib/aws-lambda";
 
 export class Remix extends Construct {
-  constructor(scope: Construct, id: string) {
+  constructor(scope: Construct, id: string, props: { apiUrl: string }) {
     super(scope, id);
 
     const assetsBucket = new Bucket(this, "AssetsBucket", {
@@ -45,7 +44,7 @@ export class Remix extends Construct {
 
     const assetsBucketOriginAccessIdentity = new OriginAccessIdentity(
       this,
-      "AssetsBucketOriginAccessIdentity"
+      "RemixAssetsBucketOriginAccessIdentity"
     );
 
     const assetsBucketS3Origin = new S3Origin(assetsBucket, {
@@ -60,33 +59,23 @@ export class Remix extends Construct {
       },
       entry: "../ui/server/index.mjs",
       logRetention: RetentionDays.THREE_DAYS,
-      memorySize: 256,
+      memorySize: 2048,
       timeout: Duration.seconds(10),
       runtime: Runtime.NODEJS_18_X,
-
+      environment: {
+        VITE_API_URL: props.apiUrl,
+      },
       bundling: {
         esbuildArgs: {
           "--tree-shaking": true,
         },
         format: OutputFormat.CJS,
         logLevel: LogLevel.INFO,
-        minify: true,
-        commandHooks: {
-          afterBundling(inputDir, outputDir) {
-            return [
-              //moving dependencies from the input to the output
-              `cp ${inputDir}/build/server/*.map ${outputDir} || echo`,
-              `cp ${inputDir}/build/server/*.json ${outputDir} || echo`,
-            ];
-          },
-          beforeBundling: (): string[] => [],
-          beforeInstall: (): string[] => [],
-        },
+        sourceMap: true,
+        tsconfig: "../ui/tsconfig.json",
       },
     });
 
-    // The only way to interact with http streams is lambda function urls, which you cannot put behind a CDN, and route 53,
-    // so i'm not going to bother right now.
     const url = fn.addFunctionUrl({
       invokeMode: InvokeMode.RESPONSE_STREAM,
       authType: FunctionUrlAuthType.NONE,
@@ -96,30 +85,16 @@ export class Remix extends Construct {
       enableLogging: false,
       httpVersion: HttpVersion.HTTP2_AND_3,
       priceClass: PriceClass.PRICE_CLASS_100,
-      // Default behavior, all requests get handled by edge function, with the fall through origin as s3.
       defaultBehavior: {
         allowedMethods: AllowedMethods.ALLOW_ALL,
         cachePolicy: CachePolicy.CACHING_DISABLED,
         compress: true,
-        edgeLambdas: [
-          {
-            eventType: LambdaEdgeEventType.ORIGIN_REQUEST,
-            functionVersion: fn.currentVersion,
-            includeBody: true,
-          },
-        ],
-
-        origin: new HttpOrigin(url.url.replace("https://", ""), {
-          originId: "StreamingFnOriginId",
-        }),
-        originRequestPolicy: new OriginRequestPolicy(
+        edgeLambdas: undefined,
+        origin: new FunctionUrlOrigin(url),
+        originRequestPolicy: OriginRequestPolicy.fromOriginRequestPolicyId(
           this,
-          "OriginRequestPolicy",
-          {
-            headerBehavior: OriginRequestHeaderBehavior.all(),
-            queryStringBehavior: OriginRequestQueryStringBehavior.all(),
-            cookieBehavior: OriginRequestCookieBehavior.all(),
-          }
+          "policy",
+          "b689b0a8-53d0-40ab-baf2-68738e2966ac"
         ),
         viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
       },
@@ -140,7 +115,7 @@ export class Remix extends Construct {
       destinationBucket: assetsBucket,
       distribution,
       prune: true,
-      sources: [Source.asset("../ui/build/client")],
+      sources: [Source.asset("../ui/public")],
       cacheControl: [
         CacheControl.maxAge(Duration.days(365)),
         CacheControl.sMaxAge(Duration.days(365)),

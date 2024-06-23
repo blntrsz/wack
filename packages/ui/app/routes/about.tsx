@@ -1,8 +1,7 @@
 import type { MetaFunction } from "@remix-run/node";
-import { Await, Link, defer, useLoaderData } from "@remix-run/react";
+import { Link, json, useLoaderData } from "@remix-run/react";
 import type { AppType } from "../../../backend/src/index";
 import { hc } from "hono/client";
-import { Suspense } from "react";
 
 const apiUrl = process.env.VITE_API_URL!;
 
@@ -16,9 +15,10 @@ export const meta: MetaFunction = () => {
 };
 
 export async function loader() {
-  const response = client.index.$get().then((r) => r.json());
+  const response = await client.index.$get();
+  const responseJson = await response.json();
 
-  return defer({ response });
+  return json(responseJson);
 }
 
 export default function Index() {
@@ -28,14 +28,7 @@ export default function Index() {
     <div className="font-sans p-4">
       <h1 className="text-3xl">Welcome to Remix</h1>
       <Link to="/about">About</Link>
-      <h2>
-        Message from server:
-        <Suspense fallback={<>Loading...</>}>
-          <Await resolve={loaderData.response}>
-            {(data) => <>{data.message}</>}
-          </Await>
-        </Suspense>
-      </h2>
+      <h2>Message from server: {loaderData.message}</h2>
       <ul className="list-disc mt-4 pl-6 space-y-2">
         <li>
           <a

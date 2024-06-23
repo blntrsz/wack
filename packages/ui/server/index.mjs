@@ -3,6 +3,9 @@
 
 import * as remixServerBuild from "../build/server/index.js";
 import { createRequestHandler as createNodeRequestHandler } from "@remix-run/node";
+import { installGlobals } from "@remix-run/node";
+
+installGlobals();
 
 /**
  * Common binary MIME types
