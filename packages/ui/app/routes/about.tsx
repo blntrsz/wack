@@ -1,5 +1,5 @@
 import type { MetaFunction } from "@remix-run/node";
-import { Link, json, useLoaderData } from "@remix-run/react";
+import { json, useLoaderData } from "@remix-run/react";
 import type { AppType } from "../../../backend/src/index";
 import { hc } from "hono/client";
 
@@ -26,9 +26,10 @@ export default function Index() {
 
   return (
     <div className="font-sans p-4">
-      <h1 className="text-3xl">Welcome to Remix</h1>
-      <Link to="/about">About</Link>
-      <h2>Message from server: {loaderData}</h2>
+      <h1 className="text-3xl">About page</h1>
+      <h2>
+        Message from server: <>{loaderData.action}</>
+      </h2>
       <ul className="list-disc mt-4 pl-6 space-y-2">
         <li>
           <a

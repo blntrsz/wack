@@ -5,7 +5,7 @@ import {
   Source,
 } from "aws-cdk-lib/aws-s3-deployment";
 import { Construct } from "constructs";
-import { Duration, RemovalPolicy } from "aws-cdk-lib";
+import { CfnOutput, Duration, RemovalPolicy } from "aws-cdk-lib";
 import {
   LogLevel,
   NodejsFunction,
@@ -31,9 +31,15 @@ import {
   InvokeMode,
   Runtime,
 } from "aws-cdk-lib/aws-lambda";
+import path from "path";
+
+interface RemixProps {
+  apiUrl: string;
+  uiPath: string;
+}
 
 export class Remix extends Construct {
-  constructor(scope: Construct, id: string, props: { apiUrl: string }) {
+  constructor(scope: Construct, id: string, props: RemixProps) {
     super(scope, id);
 
     const assetsBucket = new Bucket(this, "AssetsBucket", {
@@ -57,7 +63,7 @@ export class Remix extends Construct {
       currentVersionOptions: {
         removalPolicy: RemovalPolicy.DESTROY,
       },
-      entry: "../ui/server/index.mjs",
+      entry: path.join(props.uiPath, "server/index.mjs"),
       logRetention: RetentionDays.THREE_DAYS,
       memorySize: 2048,
       timeout: Duration.seconds(10),
@@ -72,7 +78,7 @@ export class Remix extends Construct {
         format: OutputFormat.CJS,
         logLevel: LogLevel.INFO,
         sourceMap: true,
-        tsconfig: "../ui/tsconfig.json",
+        tsconfig: path.join(props.uiPath, "tsconfig.json"),
       },
     });
 
@@ -107,7 +113,18 @@ export class Remix extends Construct {
           origin: assetsBucketS3Origin,
           viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
         },
+        "favicon.ico": {
+          allowedMethods: AllowedMethods.ALLOW_GET_HEAD,
+          cachePolicy: CachePolicy.CACHING_OPTIMIZED,
+          compress: true,
+          origin: assetsBucketS3Origin,
+          viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+        },
       },
+    });
+
+    new CfnOutput(this, "ui", {
+      value: distribution.distributionDomainName,
     });
 
     // Deploy the local code to S3
@@ -115,7 +132,7 @@ export class Remix extends Construct {
       destinationBucket: assetsBucket,
       distribution,
       prune: true,
-      sources: [Source.asset("../ui/public")],
+      sources: [Source.asset(path.join(props.uiPath, "build/client"))],
       cacheControl: [
         CacheControl.maxAge(Duration.days(365)),
         CacheControl.sMaxAge(Duration.days(365)),

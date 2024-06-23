@@ -13,6 +13,7 @@ export class UiStack extends Stack {
 
     new Remix(this, "remix", {
       apiUrl: stacks.apiStack.api.url,
+      uiPath: "../ui",
     });
   }
 }

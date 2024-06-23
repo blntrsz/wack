@@ -31,7 +31,9 @@ export default function Index() {
       <h2>
         Message from server:
         <Suspense fallback={<>Loading...</>}>
-          <Await resolve={loaderData.response}>{(data) => <>{data}</>}</Await>
+          <Await resolve={loaderData.response}>
+            {(data) => <>{data.action}</>}
+          </Await>
         </Suspense>
       </h2>
       <ul className="list-disc mt-4 pl-6 space-y-2">

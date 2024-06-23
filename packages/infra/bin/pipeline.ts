@@ -32,7 +32,7 @@ new CDKApplication({
   pipeline: [
     {
       environment: "test",
-      post: ['echo "do integration tests here"'],
+      // post: ['echo "do integration tests here"'],
     },
     {
       environment: "prod",
